@@ -1,0 +1,38 @@
+# mysql Dump
+#
+
+# Host: localhost    Database: roxen
+#--------------------------------------------------------
+
+
+#
+# Table structure for table 'log'
+#
+CREATE TABLE access_log (
+  Host CHAR(64),
+  Timestmp INT(10),
+  Request CHAR(64),
+  Referer CHAR(64),
+  Email CHAR(64),
+  Browser CHAR(64),
+  User_id CHAR(20),
+  Bin_len INT(10),
+  Result_code INT(10),
+  Method_type CHAR(10),
+  KEY (Request)
+
+);
+
+
+CREATE TABLE access_info (
+  Request char(64) NOT NULL,
+  Timestmp int(10) NOT NULL DEFAULT '0',
+  Total int(10),
+  Today int(10),
+  Stimestamp int(10) NOT NULL DEFAULT '0',
+  Host char(64),
+  Email char(64),
+  Referer char(64),
+  Browser char(64),
+  PRIMARY KEY (Request)
+);
