@@ -3,7 +3,7 @@
 // Uses a pike supported sql database system to log accesses.
 // written by Bill Welliver, <hww3@riverweb.com>
 //
-string cvs_version = "$Id: log_sql.pike,v 1.1 1999-01-10 04:20:12 hww3 Exp $";
+string cvs_version = "$Id: log_sql.pike,v 1.2 1999-01-13 02:48:53 hww3 Exp $";
 
 #include <module.h>
 inherit "module";
@@ -86,7 +86,8 @@ void log(object id, mapping file)
 	object sql_conn=db->handle();
 	log_query="INSERT INTO " + logtable+ 
 	" VALUES('"+  roxen->quick_ip_to_host(id->remoteaddr) 
-+  "',"+id->time  + ",'"+id->not_query+ "','"+id->referer*"" 
++  "',FROM_UNIXTIME("+ id->time  + "),'"+id->not_query+
+"','"+id->referer*"" 
 +"','"+id->from+"','" +id->client*""+"','" +id->cookies->RoxenUserID 
 + "',"+file->len + ","+(file->error||200) 
 + ",'"+id->method+"')";      
