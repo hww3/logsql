@@ -3,13 +3,14 @@
 // Uses a pike supported sql database system to log accesses.
 // written by Bill Welliver, <hww3@riverweb.com>
 //
-string cvs_version = "$Id: log_sql.pike,v 1.2 1999-01-13 02:48:53 hww3 Exp $";
+string cvs_version = "$Id: log_sql.pike,v 1.3 2000-10-10 20:27:33 hww3 Exp $";
 
 #include <module.h>
 inherit "module";
 
 object db;		// The db stack
 string logtable; 
+multiset usertables=(<>);
 
 array register_module()
 {
@@ -33,7 +34,7 @@ void create()
   defvar("dbpassword", "", "Database password", 
 	 TYPE_STRING,
 	 "DB User's Password\n");
-  defvar("dbcount", 3, "Number of Connections", 
+  defvar("dbcount", 1, "Number of Connections", 
 	 TYPE_INT,
 	 "Number of connections to make.\n");
   defvar("logdb", "roxen", "Log database", 
@@ -53,7 +54,7 @@ void start()
 	string dbserver=query("dbserver");
 	if (lower_case(dbserver)=="localhost")
 		{ dbserver=""; }
-	db=dbstack.db_handler(
+	db=.dbstack.db_handler(
                     query("dbserver"),
                     query("logdb"),
                     query("dbcount"),
@@ -84,11 +85,29 @@ void log(object id, mapping file)
 {
 	string log_query;
 	object sql_conn=db->handle();
-	log_query="INSERT INTO " + logtable+ 
+string logtable1=logtable;
+  if(!usertables[logtable1]) {
+//	perror("don't have usertable in cache.\n");
+    if(sizeof(sql_conn->list_tables(logtable1))==1)
+	usertables+=(<logtable1>);  // it exists, so add to cache.
+    else {
+// perror("creating table.\n");
+	log_query="CREATE TABLE "+logtable1+" ( Host varchar(64), Timestmp "
+"datetime, Request varchar(72) DEFAULT '' NOT NULL, Referer varchar(80),"
+"Browser varchar(64), User_id char(20), Length int(10), Result_code "
+"int(10), Method_type char(10), KEY Request (Request) )";
+
+	if(!catch(sql_conn->query(log_query))) // doesn't exist, so create
+		usertables+=(<logtable1>);  // add to cache.
+	else perror("Error creating table!\n");
+	}
+  }
+
+	log_query="INSERT INTO " + logtable1+ 
 	" VALUES('"+  roxen->quick_ip_to_host(id->remoteaddr) 
 +  "',FROM_UNIXTIME("+ id->time  + "),'"+id->not_query+
 "','"+id->referer*"" 
-+"','"+id->from+"','" +id->client*""+"','" +id->cookies->RoxenUserID 
++"','" +id->client*""+"','" +id->cookies->RoxenUserID 
 + "',"+file->len + ","+(file->error||200) 
 + ",'"+id->method+"')";      
 	if(catch(sql_conn->query(log_query)))
